@@ -1,6 +1,7 @@
 # go-simple-postgresql-migrate
 
 An extremely simple PostgreSQL migration library. 
+Migrations will be stored in plain SQL as text files in local folder `postgresql-migrations`.
 
 ## How to get started
 
