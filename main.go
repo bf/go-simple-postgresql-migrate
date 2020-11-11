@@ -16,16 +16,11 @@ import (
 )
 
 const (
-    DEFAULT_HOST = "127.0.0.1"
-    // DEFAULT_PORT = "5432"
-    // DEFAULT_USER = "postgres"
-    // DEFAULT_PASSWORD = ""
-    // DEFAULT_DATABASE = "postgres"
-
-    DEFAULT_PORT     = "9999"
-    DEFAULT_USER     = "leasing"
-    DEFAULT_PASSWORD = "jTMYabhvTqns4d"
-    DEFAULT_DATABASE = "leasing"
+    DEFAULT_HOST     = "127.0.0.1"
+    DEFAULT_PORT     = "5432"
+    DEFAULT_USER     = "postgres"
+    DEFAULT_PASSWORD = ""
+    DEFAULT_DATABASE = "postgres"
 
     CONST_ENV_VAR = "POSTGRESQL_URL"
 
