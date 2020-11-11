@@ -5,9 +5,9 @@ Migrations will be stored in plain SQL as text files in local folder `postgresql
 
 ## How to get started
 
-Check out the repository and compile it:
+Check out the repository, download dependencies and install:
 
-> go mod download; go build
+> go mod download; go build; go install
 
 Initialize the database connection with
 
