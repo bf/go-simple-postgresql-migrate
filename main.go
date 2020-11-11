@@ -404,9 +404,9 @@ func cmd_up() {
 
     // is there anything to do?
     if len(migrationsInDatabase) == len(migrationsInFileSystem) {
-        logError("Error: Database already up to date, with %d migrations applied. Latest migration is %s",
+        fmt.Printf("Database already up to date, with %d migrations applied.\nMost recent migration is %s\n",
             len(migrationsInDatabase), migrationsInDatabase[len(migrationsInDatabase)-1])
-        os.Exit(1)
+        os.Exit(0)
     }
 
     // calculate delta
@@ -414,15 +414,19 @@ func cmd_up() {
     // fmt.Println("delta", delta)
 
     for _, fileName := range delta {
+        // get sql for forward migration
         sqlMigrationForward, _ := readMigrationFromFile(fileName)
-        migrateForward(fileName, sqlMigrationForward)
-        fmt.Println("forward migration:", fileName)
+
+        // perform migration
+        insertedId := migrateForward(fileName, sqlMigrationForward)
+
+        fmt.Printf("forward migration: %s (database id: %d)\n", fileName, insertedId)
     }
 
 }
 
 // migrate forward
-func migrateForward(fileName string, sqlMigrationForward string) {
+func migrateForward(fileName string, sqlMigrationForward string) int {
     tx, err := postgreSQLConnection.Begin(context.Background())
     if err != nil {
         logError("Error: Failed to start forward transaction")
@@ -440,7 +444,10 @@ func migrateForward(fileName string, sqlMigrationForward string) {
     }
 
     // store migration in table
-    _, err = tx.Exec(context.Background(), fmt.Sprintf("INSERT INTO %s (filename) VALUES ($1)", CONST_POSTGRESQL_TABLE_NAME), fileName)
+    var insertedId int
+    err = tx.QueryRow(context.Background(),
+        fmt.Sprintf("INSERT INTO %s (filename) VALUES ($1) RETURNING id", CONST_POSTGRESQL_TABLE_NAME),
+        fileName).Scan(&insertedId)
     if err != nil {
         logError("Error: Failed to store forward migration info in %s", CONST_POSTGRESQL_TABLE_NAME)
         panic(err)
@@ -451,6 +458,8 @@ func migrateForward(fileName string, sqlMigrationForward string) {
         logError("Error: Failed to commit forward transaction")
         panic(err)
     }
+
+    return insertedId
 }
 
 // migrate backwards
@@ -508,8 +517,8 @@ func cmd_down() {
 
     // is there anything to do?
     if len(migrationsInDatabase) == 0 {
-        logError("Error: Database is already without any migrations applied")
-        os.Exit(1)
+        fmt.Println("There are no further migrations that can be reverted.")
+        os.Exit(0)
     }
 
     // get filename of last migration from array

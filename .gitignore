@@ -1,0 +1,2 @@
+postgresql-migrations/*
+go-simple-postgresql-migrate
