@@ -22,7 +22,11 @@ const (
 	DEFAULT_PASSWORD = ""
 	DEFAULT_DATABASE = "postgres"
 
-	CONST_ENV_VAR = "POSTGRESQL_URL"
+	CONST_ENV_VAR_POSTGRESQL_USER = "POSTGRESQL_USER"
+	CONST_ENV_VAR_POSTGRESQL_HOST = "POSTGRESQL_HOST"
+	CONST_ENV_VAR_POSTGRESQL_PORT = "POSTGRESQL_PORT"
+	CONST_ENV_VAR_POSTGRESQL_PASSWORD = "POSTGRESQL_PASSWORD"
+	CONST_ENV_VAR_POSTGRESQL_DATABASE = "POSTGRESQL_DATABASE"
 
 	CONST_MIGRATIONS_FOLDER      = "postgresql-migrations"
 	CONST_DATABASE_INFO_FILENAME = "postgresql-connection-string.txt"
@@ -39,7 +43,7 @@ var postgreSQLConnection *pgx.Conn
 // output help
 func cmd_help() {
 	fmt.Printf("%v {init|up|down|create name..|destroy}\n", os.Args[0])
-	fmt.Println("Hint: Provide the PostgreSQL connection string via environment variable", CONST_ENV_VAR)
+
 	fmt.Println(`
     init        ask for database credentials and create migrations folder
     create      add a new migration file
@@ -47,6 +51,21 @@ func cmd_help() {
     down        do exactly ONE backwards migration
     destroy     do all backwards migrations at once
     `)
+
+	fmt.Printf(`
+	Hint: Provide the PostgreSQL connection string via environment variables:
+		%s (default: "%s")
+		%s (default: "%s")
+		%s (default: "%s")
+		%s (default: "%s")
+		%s (default: "%s")
+	`, 
+	CONST_ENV_VAR_POSTGRESQL_USER, DEFAULT_USER, 
+	CONST_ENV_VAR_POSTGRESQL_PASSWORD, DEFAULT_PASSWORD, 
+	CONST_ENV_VAR_POSTGRESQL_DATABASE, DEFAULT_DATABASE,
+	CONST_ENV_VAR_POSTGRESQL_HOST, DEFAULT_HOST, 
+	CONST_ENV_VAR_POSTGRESQL_PORT, DEFAULT_PORT)
+
 	os.Exit(0)
 }
 
@@ -82,7 +101,7 @@ func readFromStdIn(what string, defaultValue string) string {
 }
 
 // retrieve connection details from user
-func getConnectionStringFromUser() string {
+func getDatabaseConnectionStringFromUser() string {
 	fmt.Println()
 	fmt.Println("Please type in the PostgreSQL credentials you want to use:")
 
@@ -113,6 +132,48 @@ func writeStringToFile(filePath string, strData string) {
 	file.Close()
 }
 
+// get connection string from environment
+func getDatabaseConnectionStringFromEnvironment() string {
+	useConnectionStringFromEnvironment := false
+
+	user := DEFAULT_USER
+	if len(os.Getenv(CONST_ENV_VAR_POSTGRESQL_USER)) > 0 {
+		user = os.Getenv(CONST_ENV_VAR_POSTGRESQL_USER)
+		useConnectionStringFromEnvironment = true
+	}
+
+	password := DEFAULT_PASSWORD
+	if len(os.Getenv(CONST_ENV_VAR_POSTGRESQL_PASSWORD)) > 0 {
+		password = os.Getenv(CONST_ENV_VAR_POSTGRESQL_PASSWORD)
+		useConnectionStringFromEnvironment = true
+	}
+	
+	host := DEFAULT_HOST
+	if len(os.Getenv(CONST_ENV_VAR_POSTGRESQL_HOST)) > 0 {
+		host = os.Getenv(CONST_ENV_VAR_POSTGRESQL_HOST)
+		useConnectionStringFromEnvironment = true
+	}
+
+	port := DEFAULT_PORT
+	if len(os.Getenv(CONST_ENV_VAR_POSTGRESQL_PORT)) > 0 {
+		port = os.Getenv(CONST_ENV_VAR_POSTGRESQL_PORT)
+		useConnectionStringFromEnvironment = true
+	}
+
+	database := DEFAULT_DATABASE
+	if len(os.Getenv(CONST_ENV_VAR_POSTGRESQL_DATABASE)) > 0 {
+		database = os.Getenv(CONST_ENV_VAR_POSTGRESQL_DATABASE)
+		useConnectionStringFromEnvironment = true
+	}
+	
+
+	if !useConnectionStringFromEnvironment {
+		return ""
+	}
+
+	return "postgresql://" + user + ":" + password + "@" + host + ":" + port + "/" + database
+}
+
 // initiate the versioning
 func cmd_init() {
 	// check if migrations folder exists
@@ -136,12 +197,12 @@ func cmd_init() {
 	}
 
 	// get connection info from environment variable
-	connectionString := os.Getenv(CONST_ENV_VAR)
+	connectionString := getDatabaseConnectionStringFromEnvironment()
 	storeConnectionStringAsFile := false
 
 	// ask user for connection info
 	if len(connectionString) == 0 {
-		connectionString = getConnectionStringFromUser()
+		connectionString = getDatabaseConnectionStringFromUser()
 		storeConnectionStringAsFile = true
 	}
 
@@ -198,7 +259,7 @@ func connectToPostgreSQL(connectionString string) {
 // retrieve database cursor
 func connectToStoredDatabaseConnection() {
 	// get connection info from environment variable
-	connectionString := os.Getenv(CONST_ENV_VAR)
+	connectionString := getDatabaseConnectionStringFromEnvironment()
 
 	// fallback: attempt to read from file
 	if len(connectionString) == 0 {
