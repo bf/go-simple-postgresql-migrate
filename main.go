@@ -33,7 +33,7 @@ const (
     CONST_DATABASE_INFO_FILENAME = "postgresql-connection-string.txt"
 
     CONST_POSTGRESQL_TABLE_NAME   = "_go_simple_postgresql_migrate"
-    CONST_POSTGRESQL_TABLE_SCHEMA = "CREATE TABLE %s (id serial, created_at timestamp with time zone DEFAULT NOW(), filename text, UNIQUE(filename))"
+    CONST_POSTGRESQL_TABLE_SCHEMA = "CREATE TABLE IF NOT EXISTS %s (id serial, created_at timestamp with time zone DEFAULT NOW(), filename text, UNIQUE(filename))"
 
     CONST_TEMPLATE             = "--\n--   %s\n--\n-- created: %s\n--\n-- FORWARD (UP) migration is below this line:\n--\n\n\n%s\n\n"
     CONST_TEMPLATE_UNDO_MARKER = "\n--\n-- UNDO (DOWN) migration is below this line:\n-- (do not change this block!)\n--\n"
