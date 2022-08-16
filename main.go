@@ -48,6 +48,7 @@ func cmd_help() {
     fmt.Println(`
     init        ask for database credentials and create migrations folder
     create      add a new migration file
+    create_here add a new migration file in current folder (no checks)
     up          do forward migrations until database is up to date
     down        do exactly ONE backwards migration
     destroy     do all backwards migrations at once
@@ -322,6 +323,41 @@ func cmd_create(fileName string) {
 
     os.Exit(0)
 }
+
+// create new migration file right here in this folder
+func cmd_create_here(fileName string) {
+    // sanitize filename
+    reFileName := regexp.MustCompile("[^a-zA-Z0-9-_]")
+    sanitizedFileName := string(reFileName.ReplaceAll([]byte(strings.TrimSpace(fileName)), []byte("")))
+
+    reTimestamp := regexp.MustCompile("[^0-9]")
+    timestamp := time.Now().UTC()
+
+    timestampForFileName := timestamp.Format(time.RFC3339)
+    timestampForFileName = string(reTimestamp.ReplaceAll([]byte(timestampForFileName), []byte("")))
+
+    migrationFileName := timestampForFileName + "-" + sanitizedFileName + ".sql"
+
+    // check if file already exists
+    workDir, _ := os.Getwd()
+    filePath := path.Join(workDir, migrationFileName)
+    _, err := os.Stat(filePath)
+    if !os.IsNotExist(err) {
+        logError("Error: migration file does already exist: %s", filePath)
+        os.Exit(1)
+    }
+
+    // write template to file
+    writeStringToFile(filePath, fmt.Sprintf(CONST_TEMPLATE,
+        sanitizedFileName,
+        timestamp.Format(time.RFC850),
+        CONST_TEMPLATE_UNDO_MARKER))
+
+    fmt.Println("created", filePath)
+
+    os.Exit(0)
+}
+
 
 // fetch  migrations from database
 func getMigrationsFromDatabase() []string {
@@ -627,6 +663,9 @@ func main() {
 
     case "create":
         cmd_create(strings.Join(os.Args[2:], "-"))
+
+    case "create-here":
+        cmd_create_here(strings.Join(os.Args[2:], "-"))
 
     case "up":
         if len(os.Args) == 2 {
