@@ -48,7 +48,7 @@ func cmd_help() {
     fmt.Println(`
     init        ask for database credentials and create migrations folder
     create      add a new migration file
-    create_here add a new migration file in current folder (no checks)
+    create-here add a new migration file in current folder (no checks)
     up          do forward migrations until database is up to date
     down        do exactly ONE backwards migration
     destroy     do all backwards migrations at once
