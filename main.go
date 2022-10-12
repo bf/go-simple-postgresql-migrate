@@ -12,7 +12,7 @@ import (
     "strings"
     "time"
 
-    "github.com/jackc/pgx/v4.17.2"
+    "github.com/jackc/pgx/v4"
 )
 
 const (
