@@ -1,4 +1,4 @@
-module go-simple-postgresql-migrate
+module github.com/bf/go-simple-postgresql-migrate
 
 go 1.15
 
