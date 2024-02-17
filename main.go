@@ -540,6 +540,7 @@ func migrateForward(fileName string, sqlMigrationForward string) int {
     tx, err := postgreSQLConnection.Begin(context.Background())
     if err != nil {
         logError("Error: Failed to start forward transaction")
+        logError("Error while processing file: %s", fileName)
         panic(err)
     }
 
@@ -549,6 +550,7 @@ func migrateForward(fileName string, sqlMigrationForward string) int {
     _, err = tx.Exec(context.Background(), sqlMigrationForward)
     if err != nil {
         logError("Error: Forward transaction failed")
+        logError("Error while processing file: %s", fileName)
         logError(sqlMigrationForward)
         panic(err)
     }
@@ -560,12 +562,14 @@ func migrateForward(fileName string, sqlMigrationForward string) int {
         fileName).Scan(&insertedId)
     if err != nil {
         logError("Error: Failed to store forward migration info in %s", CONST_POSTGRESQL_TABLE_NAME)
+        logError("Error while processing file: %s", fileName)
         panic(err)
     }
 
     err = tx.Commit(context.Background())
     if err != nil {
         logError("Error: Failed to commit forward transaction")
+        logError("Error while processing file: %s", fileName)
         panic(err)
     }
 
@@ -577,6 +581,7 @@ func migrateBackward(fileName string, sqlMigrationBackward string) {
     tx, err := postgreSQLConnection.Begin(context.Background())
     if err != nil {
         logError("Error: Failed to start backward transaction")
+        logError("Error while processing file: %s", fileName)
         panic(err)
     }
 
@@ -592,6 +597,7 @@ func migrateBackward(fileName string, sqlMigrationBackward string) {
         &mostRecentMigrationId, &mostRecentMigrationFileName)
     if err != nil {
         logError("Error: Cannot fetch most recent migration")
+        logError("Error while processing file: %s", fileName)
         panic(err)
     }
 
@@ -599,6 +605,7 @@ func migrateBackward(fileName string, sqlMigrationBackward string) {
     _, err = tx.Exec(context.Background(), sqlMigrationBackward)
     if err != nil {
         logError("Error: background migration failed")
+        logError("Error while processing file: %s", fileName)
         logError(sqlMigrationBackward)
         panic(err)
     }
@@ -610,12 +617,14 @@ func migrateBackward(fileName string, sqlMigrationBackward string) {
     if err != nil {
         logError("Error: Failed to remove backward migration #%d from database table %s",
             mostRecentMigrationId, CONST_POSTGRESQL_TABLE_NAME)
+        logError("Error while processing file: %s", fileName)
         panic(err)
     }
 
     err = tx.Commit(context.Background())
     if err != nil {
         logError("Error: Failed to commit backward transaction")
+        logError("Error while processing file: %s", fileName)
         panic(err)
     }
 }
